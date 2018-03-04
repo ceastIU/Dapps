@@ -1,0 +1,5 @@
+
+
+
+truffle console 
+Election.deployed().then(function(instance){app = instance})
