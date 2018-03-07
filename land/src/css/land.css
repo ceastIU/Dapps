@@ -1,0 +1,23 @@
+.card-header {
+    background-color:  #990000 !important;
+    color: #EDEBEB !important;
+    /* font-family: 'Lobster', cursive; */
+    /* font-family: 'Pacifico', cursive; */
+    font-family: 'Satisfy', cursive;
+    font-size: 280%;
+    height: 100px;
+    
+}
+.row { 
+    margin-top: 2%;
+}
+.border-color {
+    border-color:  #990000 !important;
+}
+.card-header img {
+    height: 80px;
+}
+.card.map {
+    height: 900px;
+    width: 1200px;
+}

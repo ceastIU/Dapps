@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Adding a Custom Overlay</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="css/land.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Lobster|Pacifico|Satisfy" rel="stylesheet">
+
+  </head>
+  <body>
+  
+    <div class="container-fuild">
+      <div class="row">
+      <div style="margin-left:2%;"class="col-lg-2 border rounded">
+          <div class="card border border-danger rounded">
+              <div class="card-header">
+                <img src="images/iu_trident.png">
+                Hooiser Tycoons
+              </div>
+              <div class="card-body">
+                  test
+              </div>
+            </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card map border border-danger rounded">
+          <div class="card-header">
+            <img src="images/iu_trident.png">
+            Hooiser Tycoons
+          </div>
+          <div class="card-body" id="map">
+              <div class="map" id="map"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- <div class="card">
+        <div class="card-header">
+          Quote
+        </div>
+        <div class="card-body">
+            
+        </div>
+      </div> -->
+  </body>
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDCkJZdv5OWwtGv5BHqzZh4blml0huCoQE"></script>
+    <script src="js/map.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <!-- <script src="js/bootstrap.min.js"></script> -->
+    <script src="js/web3.min.js"></script>
+    <script src="js/truffle-contract.js"></script>
+    <script src="js/app.js"></script>
+</html>
