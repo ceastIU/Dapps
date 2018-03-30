@@ -25,7 +25,6 @@ contract Election {
         uint indexed _candidateId
     );
 
-
     // Constructor
     function Election () public {
         addCandidate("Candidate 1");
@@ -41,18 +40,33 @@ contract Election {
     function vote (uint _candidateId) public {
         // require that they haven't voted before
         require(!voters[msg.sender]);
-
-        // require a valid candidate
+        
+        // require a valid candidate ~ greater than zero, less or equal to the number of candidates
         require(_candidateId > 0 && _candidateId <= candidatesCount);
-
-        // record that voter has voted
+        
+        // record the voter as having voted 
         voters[msg.sender] = true;
 
-        // update candidate vote Count
-        candidates[_candidateId].voteCount ++;
+        // update candidate vote count
+        candidates[_candidateId].voteCount ++; 
 
-        // trigger voted event
-        votedEvent(_candidateId);
+
+
+
+
+        // require(!voters[msg.sender]);
+
+        // // require a valid candidate
+        // require(_candidateId > 0 && _candidateId <= candidatesCount);
+
+        // // record that voter has voted
+        // voters[msg.sender] = true;
+
+        // // update candidate vote Count
+        // candidates[_candidateId].voteCount ++;
+
+        // // trigger voted event
+        // votedEvent(_candidateId);
     }
 
 

@@ -3,3 +3,7 @@
 
 truffle console 
 Election.deployed().then(function(instance){app = instance})
+
+Gas - Gas is used to pay the eth network. Reads are free, writes cost
+Gas is a unit measure
+Gas price, cost/unit 
