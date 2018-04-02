@@ -50,6 +50,8 @@ contract Election {
         // update candidate vote count
         candidates[_candidateId].voteCount ++; 
 
+        // tigger voted event
+        votedEvent(_candidateId);
 
 
 
