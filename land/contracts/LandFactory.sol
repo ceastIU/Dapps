@@ -2,6 +2,7 @@ pragma solidity ^0.4.17;
 
 import "./ownable.sol";
 
+
 // Declare contract
 contract LandFactory is Ownable {
     event NewLand(uint id, int lat, int long, string name);
@@ -18,8 +19,13 @@ contract LandFactory is Ownable {
         uint cooldownTime;
     } 
 
+    struct Land {
+        string name;
+    }
+
     // All the properties owned or for sale
     Property[] public properties;
+    Land[] public lands;
 
     // Solidity has a unique type called an address. 
     //Addresses are Ethereum addresses, stored as 20 byte values. 
@@ -32,6 +38,14 @@ contract LandFactory is Ownable {
     // Store # of owners
     uint public ownersCount; // There's no way to iterate over mappings, thus we must keep counter
 
+    function createLand(string _name) external onlyOwner {
+        require(ownerLandCount[msg.sender] == 0);
+        _createLand(_name);
+        //uint randDna = _generateRandomDna(_name);
+        //randDna = randDna - randDna % 100;
+        //_createZombie(_name, randDna);
+    }
+    
     function buy(uint landId) public returns (uint) {
         require(landId >= 0 && landId <= 15); // Requires landId to be inbetween 0 - 15
 
@@ -42,12 +56,11 @@ contract LandFactory is Ownable {
 
     function getLandOwners() public view returns (address[16]) {
         return landOwners;
+    }  
+
+    function _createLand(string _name) internal {
+        lands.push(Land(_name));
     }
 
-    function createLand(string _name) external onlyOwner {
-        require(ownerLandCount[msg.sender] == 0);
-        uint randDna = _generateRandomDna(_name);
-        randDna = randDna - randDna % 100;
-        _createZombie(_name, randDna);
-    }
+    
 }

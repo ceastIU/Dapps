@@ -1,21 +1,21 @@
 pragma solidity ^0.4.2;
 
-import "./LandAccess.sol";
+import "./landaccess.sol";
 
-/// @title Base contract for CryptoKitties. Holds all common structs, events and base variables.
+
+/// @title Base contract for CryptoHoosiers. Holds all common structs, events and base variables.
 /// @author Chris East
-contract LandBase is LandAccessControl {
+contract LandBase is LandAccess {
     /*** EVENTS ***/
 
     /// @dev The Build event is fired whenever a new property is generated. 
-    event Build(address owner, uint256 kittyId, uint256 matronId, uint256 sireId, uint256 genes);
+    event Build(address owner, string name, uint256 landId, uint256 lat, uint256 long);
 
     /// @dev Transfer event as defined in current draft of ERC721. Emitted every time property
     ///  ownership is assigned, including builds.
     event Transfer(address from, address to, uint256 tokenId);
 
     /*** DATA TYPES ***/
-
     /// @dev The main Kitty struct. Every cat in CryptoKitties is represented by a copy
     ///  of this structure, so great care was taken to ensure that it fits neatly into
     ///  exactly two 256-bit words. Note that the order of the members in this structure
@@ -26,7 +26,7 @@ contract LandBase is LandAccessControl {
         string id;
 
         uint64 cooldownEndBlock;    // The minimum timestamp after which this land can collect rent again. 
-        uint64 birthTime;           // The timestamp from the block when this land was 'built'.
+        uint64 buildTime;           // The timestamp from the block when this land was 'built'.
         // lat and long position of the property, filled in with the main result from google api 
         int32 lat;
         int32 long;
@@ -37,6 +37,7 @@ contract LandBase is LandAccessControl {
         uint8 level;                 // The level of the property 
 
     }
+
     struct Kitty {
         // The Kitty's genetic code is packed into these 256-bits, the format is
         // sooper-sekret! A cat's genes never change.
@@ -81,7 +82,6 @@ contract LandBase is LandAccessControl {
     }
 
     /*** CONSTANTS ***/
-
     /// @dev A lookup table indicating the cooldown duration after any successful
     ///  breeding action, called "pregnancy time" for matrons and "siring cooldown"
     ///  for sires. Designed such that the cooldown roughly doubles each time a cat
@@ -112,7 +112,7 @@ contract LandBase is LandAccessControl {
     ///  the unKitty, the mythical beast that is the parent of all gen0 cats. A bizarre
     ///  creature that is both matron and sire... to itself! Has an invalid genetic code.
     ///  In other words, cat ID 0 is invalid... ;-)
-    Kitty[] kitties;
+    Land[] properties;
 
     /// @dev A mapping from land IDs to the address that owns them. 
     mapping (uint256 => address) public landIndexToOwner;
@@ -126,12 +126,15 @@ contract LandBase is LandAccessControl {
     ///  at any time. A zero value means no approval is outstanding.
     mapping (uint256 => address) public landIndexToApproved;
 
+    // Owner can fix how many seconds per blocks are currently observed.
+    function setSecondsPerBlock(uint256 secs) external onlyOwner {
+        require(secs < cooldowns[0]);
+        secondsPerBlock = secs;
+    }
 
     /// @dev The address of the ClockAuction contract that handles sales of Land. This
     ///  same contract handles both peer-to-peer sales
-    SaleClockAuction public saleAuction;
-
-
+    //SaleClockAuction public saleAuction;
     /// @dev Assigns ownership of a specific property to an address.
     function _transfer(address _from, address _to, uint256 _tokenId) internal {
         // Since the number of properties is far lower than 2^32 we can't overflow this
@@ -143,7 +146,7 @@ contract LandBase is LandAccessControl {
             // Decrease token count for seller
             ownershipTokenCount[_from]--;
             // clear any previously approved ownership exchange
-            delete kittyIndexToApproved[_tokenId];
+            delete landIndexToApproved[_tokenId];
         }
         // Emit the transfer event.
         Transfer(_from, _to, _tokenId);
@@ -153,70 +156,133 @@ contract LandBase is LandAccessControl {
     ///  method doesn't do any checking and should only be called when the
     ///  input data is known to be valid. Will generate both a Birth event
     ///  and a Transfer event.
-    /// @param _matronId The kitty ID of the matron of this cat (zero for gen0)
-    /// @param _sireId The kitty ID of the sire of this cat (zero for gen0)
-    /// @param _generation The generation number of this cat, must be computed by caller.
-    /// @param _genes The kitty's genetic code.
-    /// @param _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
-    function _createKitty(
-        uint256 _matronId,
-        uint256 _sireId,
-        uint256 _generation,
-        uint256 _genes,
-        address _owner
+    /// _matronId The kitty ID of the matron of this cat (zero for gen0)
+    ///  _sireId The kitty ID of the sire of this cat (zero for gen0)
+    ///  _generation The generation number of this cat, must be computed by caller.
+    /// m _genes The kitty's genetic code.
+    /// ram _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
+    // function _createKitty(
+    //     uint256 _matronId,
+    //     uint256 _sireId,
+    //     uint256 _generation,
+    //     uint256 _genes,
+    //     address _owner
+    // )
+    //     internal
+    //     returns (uint)
+    // {
+    //     // These requires are not strictly necessary, our calling code should make
+    //     // sure that these conditions are never broken. However! _createKitty() is already
+    //     // an expensive call (for storage), and it doesn't hurt to be especially careful
+    //     // to ensure our data structures are always valid.
+    //     require(_matronId == uint256(uint32(_matronId)));
+    //     require(_sireId == uint256(uint32(_sireId)));
+    //     require(_generation == uint256(uint16(_generation)));
+    //     // New kitty starts with the same cooldown as parent gen/2
+    //     uint16 cooldownIndex = uint16(_generation / 2);
+    //     if (cooldownIndex > 13) {
+    //         cooldownIndex = 13;
+    //     }
+    //     Kitty memory _kitty = Kitty({
+    //         genes: _genes,
+    //         birthTime: uint64(now),
+    //         cooldownEndBlock: 0,
+    //         matronId: uint32(_matronId),
+    //         sireId: uint32(_sireId),
+    //         siringWithId: 0,
+    //         cooldownIndex: cooldownIndex,
+    //         generation: uint16(_generation)
+    //     });
+    //     //uint256 newKittenId = kitties.push(_kitty) - 1;
+    //     // It's probably never going to happen, 4 billion cats is A LOT, but
+    //     // let's just be 100% sure we never let this happen.
+    //     //equire(newKittenId == uint256(uint32(newKittenId)));
+    //     // emit the birth event 
+    //     // Birth(
+    //     //     _owner,
+    //     //     newKittenId,
+    //     //     uint256(_kitty.matronId),
+    //     //     uint256(_kitty.sireId),
+    //     //     _kitty.genes
+    //     // );
+    //     // // This will assign ownership, and also emit the Transfer event as
+    //     // // per ERC721 draft
+    //     // _transfer(0, _owner, newKittenId);
+    //     // return newKittenId;
+    // }
+    /// @dev An internal method that creates a new kitty and stores it. This
+    ///  method doesn't do any checking and should only be called when the
+    ///  input data is known to be valid. Will generate both a Birth event
+    ///  and a Transfer event.
+    /// param _matronId The kitty ID of the matron of this cat (zero for gen0)
+    /// param _sireId The kitty ID of the sire of this cat (zero for gen0)
+    /// param _generation The generation number of this cat, must be computed by caller.
+    /// param _genes The kitty's genetic code.
+    /// param _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
+    function _createLand(
+        string _name,
+        uint256 _lat,
+        uint256 _long,
+        address _owner,
+        uint256 _coolDownPeriod
     )
-        internal
+        internal onlyOwner
         returns (uint)
     {
         // These requires are not strictly necessary, our calling code should make
         // sure that these conditions are never broken. However! _createKitty() is already
         // an expensive call (for storage), and it doesn't hurt to be especially careful
         // to ensure our data structures are always valid.
-        require(_matronId == uint256(uint32(_matronId)));
-        require(_sireId == uint256(uint32(_sireId)));
-        require(_generation == uint256(uint16(_generation)));
+        require(_lat == uint256(uint32(_lat)));
+        require(_long == uint256(uint16(_long)));
+        
+        //uint16 cooldownIndex = uint16(_generation / 2);
 
-        // New kitty starts with the same cooldown as parent gen/2
-        uint16 cooldownIndex = uint16(_generation / 2);
-        if (cooldownIndex > 13) {
-            cooldownIndex = 13;
-        }
-
-        Kitty memory _kitty = Kitty({
-            genes: _genes,
-            birthTime: uint64(now),
-            cooldownEndBlock: 0,
-            matronId: uint32(_matronId),
-            sireId: uint32(_sireId),
-            siringWithId: 0,
-            cooldownIndex: cooldownIndex,
-            generation: uint16(_generation)
+        // if (cooldownIndex > 13) {
+        //     cooldownIndex = 13;
+        // }
+        // The id of the land, each is unquie to the property
+        //string id;
+        // uint64 cooldownEndBlock;    // The minimum timestamp after which this land can collect rent again. 
+        // uint64 birthTime;           // The timestamp from the block when this land was 'built'.
+        // lat and long position of the property, filled in with the main result from google api 
+        // int32 lat;
+        // int32 long;
+        // int32 value;                // The value of the property
+        // uint16 rent;                // The rent value of the property
+        // uint8 coolDownPeriod;       // The cooldown length for this property, used for collecting rent 
+        // uint8 level;                 // The level of the property 
+        Land memory _land = Land({
+            id: string(_name),
+            buildTime: uint64(now),
+            cooldownEndBlock: uint64(0),
+            lat: int32(_lat),
+            long: int32(_long),
+            value: uint16(0),
+            rent: uint16(0),
+            coolDownPeriod: uint8(_coolDownPeriod),
+            level: uint8(1)
         });
-        uint256 newKittenId = kitties.push(_kitty) - 1;
+        uint256 newLandId = properties.push(_land) - 1;
 
         // It's probably never going to happen, 4 billion cats is A LOT, but
         // let's just be 100% sure we never let this happen.
-        require(newKittenId == uint256(uint32(newKittenId)));
+        require(newLandId == uint256(uint32(newLandId)));
 
-        // emit the birth event
-        Birth(
-            _owner,
-            newKittenId,
-            uint256(_kitty.matronId),
-            uint256(_kitty.sireId),
-            _kitty.genes
-        );
+        // emit the birth event ~ event Build(address owner, string name, uint256 landId, uint256 lat, uint256 long);
+        Build(_owner, _name, newLandId, uint256(_land.lat), uint256(_land.long));
 
         // This will assign ownership, and also emit the Transfer event as
         // per ERC721 draft
-        _transfer(0, _owner, newKittenId);
+        _transfer(0, _owner, newLandId);
 
-        return newKittenId;
+        return newLandId;
     }
 
-    // Owner can fix how many seconds per blocks are currently observed.
-    function setSecondsPerBlock(uint256 secs) external onlyOwner {
-        require(secs < cooldowns[0]);
-        secondsPerBlock = secs;
+    function createLand(string _name, uint256 _lat, uint256 _long) external onlyOwner {
+        //require() - Require the hash of this is not in the array already
+        _createLand(_name, _lat, _long, msg.sender, 0);
     }
+
+    
 }

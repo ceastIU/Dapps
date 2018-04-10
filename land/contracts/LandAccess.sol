@@ -2,37 +2,44 @@ pragma solidity ^0.4.2;
 
 /// @title Contract that manages special access privileges for the DAPP.
 /// @author Chris East
-contract LandAccessControl {
+contract LandAccess {
     // This facet controls access control for Land. 
     //     - The Owner: The Owner can reassign other roles and change the addresses of our dependent smart
     //         contracts. It is also the only role that can unpause the smart contract. It is initially
     //         set to the address that created the smart contract.
     //
     //     
+    address public owner;
+    //address public devAddress;
 
     /// @dev Emited when contract is upgraded - See README.md for updgrade plan
     event ContractUpgrade(address newContract);
 
+    event NotOwner(string error);
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
     // The addresses of the accounts (or contracts) that can execute actions within each roles.
-    address public ownerAddress;
-    //address public devAddress;
     
+    
+    function LandAccess() public {
+        owner = msg.sender;
+    }
 
     // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
     bool public paused = false;
 
     /// @dev Access modifier for Owner-only functionality
     modifier onlyOwner() {
-        require(msg.sender == ownerAddress);
+        require(msg.sender == owner);
         _;
     }
 
-
     /// @dev Assigns a new address to act as the Owner. Only available to the current Owner.
     /// @param _newOwner The address of the new Owner
-    function setOwner(address _newOwner) external onlyOwner {
+    function setOwner(address _newOwner) public onlyOwner {
         require(_newOwner != address(0));
-        ownerAddress = _newOwner;
+        owner = _newOwner;
     }
 
     /*** Pausable functionality adapted from OpenZeppelin ***/

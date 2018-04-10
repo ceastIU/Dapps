@@ -1,5 +1,6 @@
 pragma solidity ^0.4.2;
 
+
 contract ERC721 {
     // Required methods
     function totalSupply() public view returns (uint256 total);
@@ -18,4 +19,7 @@ contract ERC721 {
     // function symbol() public view returns (string symbol);
     // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
     // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
+
+    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
