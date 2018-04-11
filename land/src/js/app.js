@@ -47,7 +47,7 @@ var App = {
     //     petsRow.append(petTemplate.html());
     //   }
     // });
-
+    
     return App.initWeb3();
   },
 
@@ -62,7 +62,7 @@ var App = {
     }
     web3 = new Web3(App.web3Provider);
 
-
+    defaultAccount = web3.eth.accounts[0];
     return App.initContract();
   },
 
@@ -76,7 +76,27 @@ var App = {
 
       App.listenForEvents();
       // Use of contract to retrieve and mark the adopted pets
+      App.buildLand();
       return App.render();
+    });
+  },
+
+  buildLand: function(){
+    App.contracts.LandBase.deployed().then(function(instance) {
+      baseInstance = instance;
+      owner = instance.owner().then((i)=>{
+        console.log('in',i);
+        return i}).then((i)=>{
+          console.log(i,web3.eth.accounts[0])
+        });
+
+      
+      return baseInstance.createLand(testJson[0].name, testJson[0].location.lat * convertCor, testJson[0].location.lng * convertCor, {from:defaultAccount, gas: 500000});
+    }).then(function(properties) {
+      console.log('props',properties);
+      $("#LandAddress").html("Land: " + properties);
+    }).catch((error)=>{
+      console.log('err',error);
     });
   },
 
@@ -113,47 +133,56 @@ var App = {
       }
     });
 
-    // Load contract data
-    App.contracts.LandBase.deployed().then(function(instance) {
-      baseInstance = instance;
-      return baseInstance.createLand(testJson[0].name, testJson[0].location.lat * convertCor, testJson[0].location.lng * convertCor, {from: accounts[1]});
-    }).then(function(properties) {
-      console.log('props',properties)
-      // for (i in 10000){
-      //   if(properties[i])
-      // }
-    //   var candidatesResults = $("#candidatesResults");
-    //   candidatesResults.empty();
-
-    //   var candidatesSelect = $('#candidatesSelect');
-    //   candidatesSelect.empty();
-
-    //   for (var i = 1; i <= candidatesCount; i++) {
-    //     electionInstance.candidates(i).then(function(candidate) {
-    //       var id = candidate[0];
-    //       var name = candidate[1];
-    //       var voteCount = candidate[2];
-
-    //       // Render candidate Result
-    //       var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
-    //       candidatesResults.append(candidateTemplate);
-
-    //       // Render candidate ballot option
-    //       var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
-    //       candidatesSelect.append(candidateOption);
+    // // Load contract data
+    // App.contracts.LandBase.deployed().then(function(instance) {
+    //   baseInstance = instance;
+    //   owner = instance.owner().then((i)=>{
+    //     console.log('in',i);
+    //     return i}).then((i)=>{
+    //       console.log(i,web3.eth.accounts[0])
     //     });
-    //   }
-    //   return electionInstance.voters(App.account);
-    // }).then(function(hasVoted) {
-    //   // Do not allow a user to vote
-    //   if(hasVoted) {
-    //     $('form').hide();
-    //   }
-    //   loader.hide();
-    //   content.show();
-    // }).catch(function(error) {
-    //   console.warn(error);
-    });
+
+      
+    //   return baseInstance.createLand(testJson[0].name, testJson[0].location.lat * convertCor, testJson[0].location.lng * convertCor, {from:defaultAccount, gas: 500000});
+    // }).then(function(properties) {
+    //   //console.log('props',properties)
+    //   // for (i in 10000){
+    //   //   if(properties[i])
+    //   // }
+    // //   var candidatesResults = $("#candidatesResults");
+    // //   candidatesResults.empty();
+
+    // //   var candidatesSelect = $('#candidatesSelect');
+    // //   candidatesSelect.empty();
+
+    // //   for (var i = 1; i <= candidatesCount; i++) {
+    // //     electionInstance.candidates(i).then(function(candidate) {
+    // //       var id = candidate[0];
+    // //       var name = candidate[1];
+    // //       var voteCount = candidate[2];
+
+    // //       // Render candidate Result
+    // //       var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
+    // //       candidatesResults.append(candidateTemplate);
+
+    // //       // Render candidate ballot option
+    // //       var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
+    // //       candidatesSelect.append(candidateOption);
+    // //     });
+    // //   }
+    // //   return electionInstance.voters(App.account);
+    // // }).then(function(hasVoted) {
+    // //   // Do not allow a user to vote
+    // //   if(hasVoted) {
+    // //     $('form').hide();
+    // //   }
+    // //   loader.hide();
+    // //   content.show();
+    // // }).catch(function(error) {
+    // //   console.warn(error);
+    // }).catch((error)=>{
+    //   console.log('err',error);
+    // })
   },
 
   // bindEvents: function() {
