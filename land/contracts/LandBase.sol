@@ -9,7 +9,7 @@ contract LandBase is LandAccess {
     /*** EVENTS ***/
 
     /// @dev The Build event is fired whenever a new property is generated. 
-    event Build(address owner, string name, uint256 landId, uint256 lat, uint256 long);
+    event Build(address owner, string name, uint256 landId, int256 lat, int256 long);
 
     /// @dev Transfer event as defined in current draft of ERC721. Emitted every time property
     ///  ownership is assigned, including builds.
@@ -23,18 +23,18 @@ contract LandBase is LandAccess {
     ///  Ref: http://solidity.readthedocs.io/en/develop/miscellaneous.html
     struct Land {
         // The id of the land, each is unquie to the property
-        string id;
-
-        uint64 cooldownEndBlock;    // The minimum timestamp after which this land can collect rent again. 
+        uint256 id;
+        string name;
+        //uint64 cooldownEndBlock;    // The minimum timestamp after which this land can collect rent again. 
         uint64 buildTime;           // The timestamp from the block when this land was 'built'.
         // lat and long position of the property, filled in with the main result from google api 
-        int32 lat;
-        int32 long;
+        int64 lat;
+        int64 long;
 
-        int32 value;                // The value of the property
-        uint16 rent;                // The rent value of the property
-        uint8 coolDownPeriod;       // The cooldown length for this property, used for collecting rent 
-        uint8 level;                 // The level of the property 
+        //int32 value;                // The value of the property
+        //uint16 rent;                // The rent value of the property
+        //uint8 coolDownPeriod;       // The cooldown length for this property, used for collecting rent 
+        //uint8 level;                 // The level of the property 
 
     }
 
@@ -112,7 +112,9 @@ contract LandBase is LandAccess {
     ///  the unKitty, the mythical beast that is the parent of all gen0 cats. A bizarre
     ///  creature that is both matron and sire... to itself! Has an invalid genetic code.
     ///  In other words, cat ID 0 is invalid... ;-)
-    Land[] properties;
+    Land[] public properties;
+
+    uint256[] built; 
 
     /// @dev A mapping from land IDs to the address that owns them. 
     mapping (uint256 => address) public landIndexToOwner;
@@ -125,6 +127,11 @@ contract LandBase is LandAccess {
     ///  transferFrom(). Each Kitty can only have one approved address for transfer
     ///  at any time. A zero value means no approval is outstanding.
     mapping (uint256 => address) public landIndexToApproved;
+
+    modifier notBuilt(string _name) {
+        require(built[uint(keccak256(_name))] == 0);
+        _;
+    }
 
     // Owner can fix how many seconds per blocks are currently observed.
     function setSecondsPerBlock(uint256 secs) external onlyOwner {
@@ -221,8 +228,8 @@ contract LandBase is LandAccess {
     /// param _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
     function _createLand(
         string _name,
-        uint256 _lat,
-        uint256 _long,
+        int256 _lat,
+        int256 _long,
         address _owner,
         uint256 _coolDownPeriod
     )
@@ -233,8 +240,8 @@ contract LandBase is LandAccess {
         // sure that these conditions are never broken. However! _createKitty() is already
         // an expensive call (for storage), and it doesn't hurt to be especially careful
         // to ensure our data structures are always valid.
-        require(_lat == uint256(uint32(_lat)));
-        require(_long == uint256(uint16(_long)));
+        require(_lat == int256(int64(_lat)));
+        require(_long == int256(int64(_long)));
         
         //uint16 cooldownIndex = uint16(_generation / 2);
 
@@ -242,26 +249,18 @@ contract LandBase is LandAccess {
         //     cooldownIndex = 13;
         // }
         // The id of the land, each is unquie to the property
-        //string id;
-        // uint64 cooldownEndBlock;    // The minimum timestamp after which this land can collect rent again. 
-        // uint64 birthTime;           // The timestamp from the block when this land was 'built'.
-        // lat and long position of the property, filled in with the main result from google api 
-        // int32 lat;
-        // int32 long;
-        // int32 value;                // The value of the property
-        // uint16 rent;                // The rent value of the property
-        // uint8 coolDownPeriod;       // The cooldown length for this property, used for collecting rent 
-        // uint8 level;                 // The level of the property 
+        
         Land memory _land = Land({
-            id: string(_name),
+            id: uint(keccak256(_name)),
+            name: string(_name),
             buildTime: uint64(now),
-            cooldownEndBlock: uint64(0),
-            lat: int32(_lat),
-            long: int32(_long),
-            value: uint16(0),
-            rent: uint16(0),
-            coolDownPeriod: uint8(_coolDownPeriod),
-            level: uint8(1)
+            //cooldownEndBlock: uint64(0),
+            lat: int64(_lat),
+            long: int64(_long)//,
+            //value: uint16(0),
+            //rent: uint16(0),
+            //coolDownPeriod: uint8(_coolDownPeriod),
+            //level: uint8(1)
         });
         uint256 newLandId = properties.push(_land) - 1;
 
@@ -270,7 +269,9 @@ contract LandBase is LandAccess {
         require(newLandId == uint256(uint32(newLandId)));
 
         // emit the birth event ~ event Build(address owner, string name, uint256 landId, uint256 lat, uint256 long);
-        Build(_owner, _name, newLandId, uint256(_land.lat), uint256(_land.long));
+        Build(_owner, _name, newLandId, _land.lat, _land.long);
+
+
 
         // This will assign ownership, and also emit the Transfer event as
         // per ERC721 draft
@@ -279,7 +280,7 @@ contract LandBase is LandAccess {
         return newLandId;
     }
 
-    function createLand(string _name, uint256 _lat, uint256 _long) external onlyOwner {
+    function createLand(string _name, int256 _lat, int256 _long) external onlyOwner {
         //require() - Require the hash of this is not in the array already
         _createLand(_name, _lat, _long, msg.sender, 0);
     }

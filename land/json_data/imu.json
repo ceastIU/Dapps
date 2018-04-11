@@ -1,0 +1,42 @@
+{
+   "html_attributions" : [],
+   "results" : [
+      {
+         "geometry" : {
+            "location" : {
+               "lat" : 39.1677028,
+               "lng" : -86.5237071
+            },
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 39.16881652989272,
+                  "lng" : -86.52223032010727
+               },
+               "southwest" : {
+                  "lat" : 39.16611687010727,
+                  "lng" : -86.52492997989272
+               }
+            }
+         },
+         "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/generic_business-71.png",
+         "id" : "ad3baca5256119d4809a6cc22dd3512587c06426",
+         "name" : "Indiana Memorial Union Bldg",
+         "photos" : [
+            {
+               "height" : 2736,
+               "html_attributions" : [
+                  "\u003ca href=\"https://maps.google.com/maps/contrib/117217479882657704131/photos\"\u003eMel Lane\u003c/a\u003e"
+               ],
+               "photo_reference" : "CmRaAAAAdLd-jX64s1_92DIiTliQdhHt7FEgxDqtrHjklinDCAV9o0Q9wO0WRZbVw7JlHx9ETOPoMoJTxOgpB64XgGsK9jTrbmrNdId7WB48DiTm7x7384_DCi1JhNKS_eK48ZQOEhC8vLMUdjrUBAKgiqgDYbYoGhRU8v0h1OLZW_2gDp83cNr0L3yEUQ",
+               "width" : 3648
+            }
+         ],
+         "place_id" : "ChIJczukocFmbIgRf572pIfMISo",
+         "reference" : "CmRbAAAAJ8loKYuzsGg2wYSXjEpub5tKE5AhWn2vBPIGk83Tkfjvn29PamxYObTqvOA9hR2PQ5ZC0l_5H-Ljv19rpVuKMb4g9B2KsJrpLw-3iDqangxH1EypRWS6CEptmj2-Zj9CEhBAY6ru_zm6bVEWMbZrqKqrGhSms3mDqY_XdDY02gcIOi2s35QtZQ",
+         "scope" : "GOOGLE",
+         "types" : [ "premise", "point_of_interest", "establishment" ],
+         "vicinity" : "Bloomington"
+      }
+   ],
+   "status" : "OK"
+}
