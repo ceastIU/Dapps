@@ -44,7 +44,7 @@ contract("Election", function(accounts){
         })
       });
 
-    it("throws an exception for invalid candidates", function(){
+    it("throws an exception for invalid owner", function(){
         return Election.deployed().then((instance)=>{
             electionInstance = instance;
             return electionInstance.vote(candidateId,{from: accounts[0]});
@@ -67,8 +67,8 @@ contract("Election", function(accounts){
           candidateId = 2;
           electionInstance.vote(candidateId, { from: accounts[1] });
           return electionInstance.candidates(candidateId);
-        }).then(function(candidate) {
-          var voteCount = candidate[2];
+        }).then(async function(candidate) {
+          var voteCount =candidate[2];
           assert.equal(voteCount, 1, "accepts first vote");
           // Try to vote again
           return electionInstance.vote(candidateId, { from: accounts[1] });
