@@ -4,9 +4,8 @@
     /* font-family: 'Lobster', cursive; */
     /* font-family: 'Pacifico', cursive; */
     font-family: 'Satisfy', cursive;
-    font-size: 280%;
+    font-size: 50px;
     height: 100px;
-    
 }
 .row { 
     margin-top: 2%;
@@ -15,9 +14,43 @@
     border-color:  #990000 !important;
 }
 .card-header img {
-    height: 80px;
+    height: 60px;
+    margin-left: 15px;
 }
+
+
 .card.map {
     height: 900px;
-    width: 1200px;
+    width: inherit;
+}
+
+
+.navbar img {
+    height: 200px;
+}
+
+.navbar {
+    background-color:  #990000 !important;
+    border-color:  #990000 !important;
+    height: 150px;
+    /* font-family: 'Lobster', cursive; */
+    /* font-family: 'Pacifico', cursive; */
+    
+    font-size: 280%;
+}
+
+.card-header.prop {
+    background-color: rgb(134 125 120) !important;
+    font-size: 40px !important;
+    font-family: 'EB Garamond', serif;
+    height: 65px;
+}
+.card-body button {
+    font-size: 40px !important;
+    height: 100px !important;
+}
+.navbar-header {
+    color: #EDEBEB !important;
+    font-size: 80px;
+    font-family: 'Satisfy', cursive;
 }

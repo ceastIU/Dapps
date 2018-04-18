@@ -13,9 +13,10 @@ var overlay;
 USGSOverlay.prototype = new google.maps.OverlayView();
 
 // Initialize the map and the custom overlay.
+map = null 
 
 function initMap() {
-  var map = new google.maps.Map(document.getElementById('map'), {
+  map = new google.maps.Map(document.getElementById('map'), {
     zoom: 15,
     center: { lat: 39.167579, lng: -86.523527 },
     mapTypeId: 'roadmap'
@@ -28,13 +29,13 @@ function initMap() {
   // The photograph is courtesy of the U.S. Geological Survey.
   var srcImage = '../images/iu.png';
 
-  var imuLatlng = { lat: 39.167579, lng: -86.523527 };
+  // var imuLatlng = { lat: 39.167579, lng: -86.523527 };
 
-  var marker = new google.maps.Marker({
-    position: imuLatlng,
-    map: map,
-    title: 'Click to zoom'
-  });
+  // var marker = new google.maps.Marker({
+  //   position: imuLatlng,
+  //   map: map,
+  //   title: 'Click to zoom'
+  // });
 
   map.addListener('center_changed', function () {
     // 3 seconds after the center of the map has changed, pan back to the
@@ -44,15 +45,39 @@ function initMap() {
     }, 15000);
   });
 
-  marker.addListener('click', function () {
-    map.setZoom(16);
-    // map.setCenter(marker.getPosition());
-    App.console("What up")
-  });
+  
   
   // The custom USGSOverlay object contains the USGS image,
   // the bounds of the image, and a reference to the map.
   overlay = new USGSOverlay(bounds, srcImage, map);
+}
+
+var setMaker = (prop) => {
+  var imuLatlng = { lat: prop.lat, lng: prop.long };
+
+  var marker = new google.maps.Marker({
+    position: imuLatlng,
+    map: map,
+    animation:google.maps.Animation.DROP,
+    title: prop.name
+  });
+
+  marker.addListener('click', function () {
+    map.setZoom(16);
+    map.panTo(marker.getPosition());
+    // map.setCenter(marker.getPosition());
+    console.log(marker.title);
+    buyTemplate =  `<div class="card border border-danger rounded">
+    <div class="card-header">
+      `+prop.name+`
+    </div>
+    <div class="card-body">
+      `+prop.id+`
+    </div>
+  </div>`
+  
+    $("#listing").html(prop.template);
+  });
 }
 
 /** @constructor */
@@ -128,3 +153,8 @@ USGSOverlay.prototype.onRemove = function () {
 };
 
 google.maps.event.addDomListener(window, 'load', initMap);
+
+function testME(msg){
+  console.log(msg);
+  
+}

@@ -42,16 +42,37 @@ contract("LandBase", function(accounts){
         });
     });
 
-    it("checks to see if we can build", function(){
-        return LandBase.deployed().then((instance)=>{
-            baseInstance = instance;
-            console.log('1',imu.location.lat*convertCor,'2', imu.location.lat*convertCor==391677028);
-            return baseInstance.createLand(imu.name, 391677028,391677028); //(imu.location.lat*convertCor), (imu.location.lng*convertCor));
-        }).then(async (result)=>{
-            var landId = result.logs[0].args.landId;
-            console.log('li',landId);
-        });
+    it('assertion success', async () => {
+        const con = await LandBase.deployed();
+        var buildCount = await con.buildCount();
+        console.log('!!!!!', buildCount, buildCount == 0);
+        for (var i = 0; i <= buildCount; i++) {
+            console.log("BULD!!!!!");
+        }
+   
+      });
+
+    it("checks to see if we can build", async () => {
+        const con = await LandBase.deployed();
+        var buildCount = await con.gameStatus();
+        console.log(buildCount.c[0], buildCount.val);
+        var test = await con.createLand(imu.name, 391677028,391677028); //(imu.location.lat*convertCor), (imu.location.lng*convertCor));
+        var buildCount = await con.buildCount();
+        console.log(2,buildCount.c[0], typeof(buildCount.c[0]));
+        assert(buildCount.c[0] == 1)
     })
+    // .then((result)=>{
+    //         var landId = result.logs[0].args.landId;
+    //         const con = await LandBase.deployed();
+    //         var buildCount = await con.buildCount();
+    //         assert.equal(buildCount).to(1)
+    //         // var post = await baseInstance.buildCount().then((i)=>{return i});
+    //         // console.log('li',landId);
+    //         // console.log('pre',pre,'post',post);
+    //         // assert(pre != post)
+            
+    //     });
+    // })
 
     
     // it("it initializes the candidates with the correct values", function() {

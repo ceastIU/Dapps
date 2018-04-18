@@ -9,7 +9,10 @@ contract LandBase is LandAccess {
     /*** EVENTS ***/
 
     /// @dev The Build event is fired whenever a new property is generated. 
-    event Build(address owner, string name, uint256 landId, int256 lat, int256 long);
+    event Build(address owner, string name, uint256 landId, int256 lat, int256 long, uint256 id);
+
+    /// @dev The Sale event is fired whenever a new property is put up for sale. 
+    event Sale(uint256 landId, string name, uint8 price);
 
     /// @dev Transfer event as defined in current draft of ERC721. Emitted every time property
     ///  ownership is assigned, including builds.
@@ -105,6 +108,12 @@ contract LandBase is LandAccess {
     // An approximation of currently how many seconds are in between blocks.
     uint256 public secondsPerBlock = 15;
 
+    address public escrow = address(0x0);
+
+    uint256 public buildCount;
+
+    uint public gameStatus = 23;
+
     /*** STORAGE ***/
 
     /// @dev An array containing the Kitty struct for all Kitties in existence. The ID
@@ -113,8 +122,14 @@ contract LandBase is LandAccess {
     ///  creature that is both matron and sire... to itself! Has an invalid genetic code.
     ///  In other words, cat ID 0 is invalid... ;-)
     Land[] public properties;
+    
+    
 
-    uint256[] built; 
+    mapping(uint=>bool) internal built;
+
+    mapping(uint256 => bool) public forSale;
+
+    mapping(uint256 => uint8) public forSalePrice;
 
     /// @dev A mapping from land IDs to the address that owns them. 
     mapping (uint256 => address) public landIndexToOwner;
@@ -129,7 +144,7 @@ contract LandBase is LandAccess {
     mapping (uint256 => address) public landIndexToApproved;
 
     modifier notBuilt(string _name) {
-        require(built[uint(keccak256(_name))] == 0);
+        require(!built[uint256(keccak256(_name))]);
         _;
     }
 
@@ -159,73 +174,30 @@ contract LandBase is LandAccess {
         Transfer(_from, _to, _tokenId);
     }
 
-    /// @dev An internal method that creates a new kitty and stores it. This
-    ///  method doesn't do any checking and should only be called when the
-    ///  input data is known to be valid. Will generate both a Birth event
-    ///  and a Transfer event.
-    /// _matronId The kitty ID of the matron of this cat (zero for gen0)
-    ///  _sireId The kitty ID of the sire of this cat (zero for gen0)
-    ///  _generation The generation number of this cat, must be computed by caller.
-    /// m _genes The kitty's genetic code.
-    /// ram _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
-    // function _createKitty(
-    //     uint256 _matronId,
-    //     uint256 _sireId,
-    //     uint256 _generation,
-    //     uint256 _genes,
-    //     address _owner
-    // )
-    //     internal
-    //     returns (uint)
-    // {
-    //     // These requires are not strictly necessary, our calling code should make
-    //     // sure that these conditions are never broken. However! _createKitty() is already
-    //     // an expensive call (for storage), and it doesn't hurt to be especially careful
-    //     // to ensure our data structures are always valid.
-    //     require(_matronId == uint256(uint32(_matronId)));
-    //     require(_sireId == uint256(uint32(_sireId)));
-    //     require(_generation == uint256(uint16(_generation)));
-    //     // New kitty starts with the same cooldown as parent gen/2
-    //     uint16 cooldownIndex = uint16(_generation / 2);
-    //     if (cooldownIndex > 13) {
-    //         cooldownIndex = 13;
-    //     }
-    //     Kitty memory _kitty = Kitty({
-    //         genes: _genes,
-    //         birthTime: uint64(now),
-    //         cooldownEndBlock: 0,
-    //         matronId: uint32(_matronId),
-    //         sireId: uint32(_sireId),
-    //         siringWithId: 0,
-    //         cooldownIndex: cooldownIndex,
-    //         generation: uint16(_generation)
-    //     });
-    //     //uint256 newKittenId = kitties.push(_kitty) - 1;
-    //     // It's probably never going to happen, 4 billion cats is A LOT, but
-    //     // let's just be 100% sure we never let this happen.
-    //     //equire(newKittenId == uint256(uint32(newKittenId)));
-    //     // emit the birth event 
-    //     // Birth(
-    //     //     _owner,
-    //     //     newKittenId,
-    //     //     uint256(_kitty.matronId),
-    //     //     uint256(_kitty.sireId),
-    //     //     _kitty.genes
-    //     // );
-    //     // // This will assign ownership, and also emit the Transfer event as
-    //     // // per ERC721 draft
-    //     // _transfer(0, _owner, newKittenId);
-    //     // return newKittenId;
-    // }
-    /// @dev An internal method that creates a new kitty and stores it. This
-    ///  method doesn't do any checking and should only be called when the
-    ///  input data is known to be valid. Will generate both a Birth event
-    ///  and a Transfer event.
-    /// param _matronId The kitty ID of the matron of this cat (zero for gen0)
-    /// param _sireId The kitty ID of the sire of this cat (zero for gen0)
-    /// param _generation The generation number of this cat, must be computed by caller.
-    /// param _genes The kitty's genetic code.
-    /// param _owner The inital owner of this cat, must be non-zero (except for the unKitty, ID 0)
+    function putForSale (uint _landId, uint _price) public {
+        // require that they haven't voted before
+        require(landIndexToOwner[_landId] == msg.sender);
+        require(_price >= 0);
+        // record the voter as having voted 
+        forSale[_landId] = true;
+        forSalePrice[_landId] = uint8(_price);
+        Land memory _land = properties[_landId];
+
+        // tigger voted event
+        Sale(_landId, _land.name, uint8(_price));
+
+    }
+
+    function buyLand (uint _landId) public payable {
+        require(forSale[_landId]);
+        require(landIndexToOwner[_landId] != msg.sender);
+        require(msg.value >= uint256(forSalePrice[_landId]));
+        address owner = landIndexToOwner[_landId];
+
+        _transfer(owner, msg.sender, _landId);
+    }
+
+    
     function _createLand(
         string _name,
         int256 _lat,
@@ -233,7 +205,7 @@ contract LandBase is LandAccess {
         address _owner,
         uint256 _coolDownPeriod
     )
-        internal onlyOwner
+        internal onlyOwner notBuilt(_name)
         returns (uint)
     {
         // These requires are not strictly necessary, our calling code should make
@@ -243,6 +215,7 @@ contract LandBase is LandAccess {
         require(_lat == int256(int64(_lat)));
         require(_long == int256(int64(_long)));
         
+        buildCount++;
         //uint16 cooldownIndex = uint16(_generation / 2);
 
         // if (cooldownIndex > 13) {
@@ -251,7 +224,7 @@ contract LandBase is LandAccess {
         // The id of the land, each is unquie to the property
         
         Land memory _land = Land({
-            id: uint(keccak256(_name)),
+            id: uint256(keccak256(_name)),
             name: string(_name),
             buildTime: uint64(now),
             //cooldownEndBlock: uint64(0),
@@ -263,13 +236,14 @@ contract LandBase is LandAccess {
             //level: uint8(1)
         });
         uint256 newLandId = properties.push(_land) - 1;
+        built[_land.id] = true;
 
         // It's probably never going to happen, 4 billion cats is A LOT, but
         // let's just be 100% sure we never let this happen.
         require(newLandId == uint256(uint32(newLandId)));
 
         // emit the birth event ~ event Build(address owner, string name, uint256 landId, uint256 lat, uint256 long);
-        Build(_owner, _name, newLandId, _land.lat, _land.long);
+        Build(_owner, _name, newLandId, _land.lat, _land.long, _land.id);
 
 
 
@@ -283,6 +257,11 @@ contract LandBase is LandAccess {
     function createLand(string _name, int256 _lat, int256 _long) external onlyOwner {
         //require() - Require the hash of this is not in the array already
         _createLand(_name, _lat, _long, msg.sender, 0);
+    }
+
+    function assignEscrow(address _escrow) external onlyOwner{
+        require(escrow == 0x0);
+        escrow = _escrow;
     }
 
     
