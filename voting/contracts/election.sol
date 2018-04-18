@@ -53,22 +53,6 @@ contract Election {
         // tigger voted event
         votedEvent(_candidateId);
 
-
-
-
-        // require(!voters[msg.sender]);
-
-        // // require a valid candidate
-        // require(_candidateId > 0 && _candidateId <= candidatesCount);
-
-        // // record that voter has voted
-        // voters[msg.sender] = true;
-
-        // // update candidate vote Count
-        // candidates[_candidateId].voteCount ++;
-
-        // // trigger voted event
-        // votedEvent(_candidateId);
     }
 
 
