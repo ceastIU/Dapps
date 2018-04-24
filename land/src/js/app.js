@@ -1,6 +1,3 @@
-// var locations  = require("../json/test.json");
-// var imu = locations[0];
-// console.log('name', imu.name, 'lat', imu.location.lat, 'long', imu.location.lng);
 var convertCor = 10000000;
 var testJson;
 var ajaxRequest = new XMLHttpRequest();
@@ -27,6 +24,8 @@ function sell(landId) {
 var App = {
   web3Provider: null,
   contracts: {},
+  user: 0,
+  con: null,
 
   init: function() {
     console.log("Hi");
@@ -52,36 +51,50 @@ var App = {
         $("#LandAddress").html(account);
       }
     });
-    defaultAccount = web3.eth.accounts[0];
+    defaultAccount = web3.eth.accounts[App.user];
     escrowAccount = web3.eth.accounts[9]; 
     return App.initContract();
   },
 
   initContract: async () => {
     console.log("Init contract");
-    $.getJSON('LandBase.json', function(data) {
+    $.getJSON('LandBase.json', function(data){
       var LandBaseArtifact = data;
       App.contracts.LandBase = TruffleContract(LandBaseArtifact);
-    
+      console.log('check');
       // Set providers
       App.contracts.LandBase.setProvider(App.web3Provider);
       
       App.stage();
-      
+      console.log('check');
       App.listenForEvents();
       // Use of contract to retrieve and mark the adopted pets
+      //App.con = await App.contracts.LandBase.deployed();
+      console.log(App.con);
+      
       App.buildLand();
-      //return App.render();
 
-
-    });
+      });
+  },
+  
+  cycleUser: async() =>{
+    console.log("New user");
+    App.user = (App.user + 1) % 9
+    defaultAccount = web3.eth.accounts[App.user];
+    App.account = web3.eth.accounts[App.user];
+    console.log(defaultAccount);
+    App.render();
   },
 
   // Stage the app for displaying
   stage: async () => {
+    console.log('Staging contract');
     var con = await App.contracts.LandBase.deployed()
     var owner = await con.owner();
-    var escrow = await con.setEscrow(escrowAccount);
+    await con.setEscrow(escrowAccount,{from:defaultAccount, gas: 500000}).catch(function(err) {console.log(err.message);});
+    var escrow = await con.escrow()
+    console.log("own",owner);
+    console.log("esc", escrow);
     $("#owner").html(owner);
     $("#escrow").html(escrow);
   },
@@ -90,21 +103,28 @@ var App = {
   buildLand: async () => {
     console.log("Build Land");
     var con = await App.contracts.LandBase.deployed()
-    var promises = [];
-    for(i in testJson){
-      console.log(testJson[i])
-      promises.push(con.createLand(testJson[i].name, testJson[i].location.lat * convertCor, 
-        testJson[i].location.lng * convertCor, {from:defaultAccount, gas: 500000}));
-    }
+    var check = await con.buildCount()
+    if (check < testJson.length){
+      var promises = [];
+      for(i in testJson){
+        console.log(testJson[i])
+        promises.push(con.createLand(testJson[i].name, testJson[i].location.lat * convertCor, 
+          testJson[i].location.lng * convertCor, {from:defaultAccount, gas: 500000}));
+      }
 
-    Promise.all(promises).then((receipt)=>{
-      console.log('Receipt:',receipt);
-      //$("#LandAddress").html("Land: " + properties);
-      App.render();
-    }).catch((error)=>{
-        console.log('err',error);
+      Promise.all(promises).then((receipt)=>{
+        console.log('Receipt:',receipt);
+        //$("#LandAddress").html("Land: " + properties);
         App.render();
-    });
+      }).catch((error)=>{
+          console.log('err',error);
+          App.render();
+      });
+    } else {
+      console.log("Already built!");
+      App.render();
+    }
+    
   },
 
   // Listen for events emitted from the contract
@@ -116,7 +136,6 @@ var App = {
     }).watch( async (error, event) => {
       console.log("event triggered", event);
       var buildC = await con.buildCount();
-      console.log('Count',buildC);
       // Reload when a new vote is recorded
       
     });
@@ -127,26 +146,32 @@ var App = {
   },
 
   render: async () => {
-    var electionInstance;
     var loader = $("#loader");
     var content = $("#content");
-    console.log('final',testJson[0].name);
     loader.show();
     content.hide();
+   
 
     var con = await App.contracts.LandBase.deployed();
     var buildC = await con.buildCount();
     var count = buildC;
+    var owner = await con.owner();
+    var escrow = await con.escrow()
+    $("#owner").html(owner);
+    $("#escrow").html(escrow);
     $("#BuildCount").html("Count: " + count);
-    console.log(count, typeof(count))
+    $("#LandAddress").html(App.account);
     var properties = $("#Props");
     for(var x=0; x < count; x++){
       var property = await con.properties(x);
       var owned = await con.landIndexToOwner(x);
       if(owned == "0x0"){
-        owned = false
+        owned = false;
+      } else if (defaultAccount != owned){
+        console.log()
+        owned = false;
       }
-      var sellDis = (!owned) ? "disabled" : "";
+      var sellDis = (!owner) ? "disabled" : "";
       var buyDis = (owned) ? "disabled" : "";
       var id = property[0].c.join('');
       var name = property[1];
@@ -159,8 +184,8 @@ var App = {
                     <div class="card-header prop">${name}</div>
                     <div class="card-body"><p style="font-size:20px;">Owner: ${owned.toString()}</p>
                     <div class="btn-group btn-group-lg" role="group">
-                            <button type="button" class="btn btn-default ${buyDis}" onClick="sell(${id})">Buy</button>
-                            <button type="button" class="btn btn-default ${sellDis}" onClick="sell(${id})">Sell</button>
+                            <button type="button" class="btn btn-secondary ${buyDis}" onClick="sell(${id})">Buy</button>
+                            <button type="button" class="btn btn-secondary ${sellDis}" onClick="sell(${id})">Sell</button>
                           </div>
                     </div></div>`;
 
@@ -171,51 +196,22 @@ var App = {
       $("#Props").find("tr").each(function () {
         var name_r = $(this).find("td:eq(0)").text();
         var id_r = $(this).find("td:eq(1)").text();
-        console.log("id",id_r)
-        console.log(name == name_r, name, name_r)
         if (name == name_r) {
             flag = 1;
         }
       });
-      console.log('flag', flag)
       if (flag == 0) {
         properties.append(propTemplate);
-        setMaker({name:name, lat:lat, long:long, id:id, index:i, template: buyTemplate});
+        setMaker({name:name, lat:lat, long:long, id:id, index:x, template: buyTemplate});
       }
       if ($('#'+id).length === 0) {
         // code to run if it isn't there
-        console.log("!!!!!")
-        
+        null
       }
       else {
           // code to run if it is there
       }
-      // $("#Props tr").each(function(index) {
-      //   if (index !== 0) {
-
-      //       $row = $(this);
-
-      //       var id = $row.find("td:nth-child(2)").text();
-      //       console.log("id",id)
-      //       if (id.indexOf(name) !== 0) {
-      //         properties.append(propTemplate);
-      //       }
-      //       else {
-      //         console.log("Already exists")
-      //       }
-      //   }
-      // });
-     
     }
-    // // Load contract data
-    // App.contracts.LandBase.deployed().then(function(instance) {
-    //   baseInstance = instance;
-    //   owner = instance.owner().then((i)=>{
-    //     console.log('in',i);
-    //     return i}).then((i)=>{
-    //       console.log(i,web3.eth.accounts[0])
-    //     });
-
       
     //   return baseInstance.createLand(testJson[0].name, testJson[0].location.lat * convertCor, testJson[0].location.lng * convertCor, {from:defaultAccount, gas: 500000});
     // }).then(function(properties) {

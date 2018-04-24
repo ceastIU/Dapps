@@ -182,19 +182,18 @@ contract LandBase is LandAccess {
         forSale[_landId] = true;
         forSalePrice[_landId] = uint8(_price);
         Land memory _land = properties[_landId];
-
+        
         // tigger voted event
         Sale(_landId, _land.name, uint8(_price));
-
     }
 
     function buyLand (uint _landId) public payable {
         require(forSale[_landId]);
         require(landIndexToOwner[_landId] != msg.sender);
         require(msg.value >= uint256(forSalePrice[_landId]));
-        address owner = landIndexToOwner[_landId];
+        address propOwner = landIndexToOwner[_landId];
 
-        _transfer(owner, msg.sender, _landId);
+        _transfer(propOwner, msg.sender, _landId);
     }
 
     
@@ -259,9 +258,10 @@ contract LandBase is LandAccess {
         _createLand(_name, _lat, _long, msg.sender, 0);
     }
 
-    function assignEscrow(address _escrow) external onlyOwner{
+    function setEscrow(address _escrow) external onlyOwner returns(address){
         require(escrow == 0x0);
         escrow = _escrow;
+        return escrow;
     }
 
     
